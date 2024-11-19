@@ -1,43 +1,62 @@
-# This program is written for Amazon Linux image
+"""
+This program runs on an Amazon Linux image and provides system stats.
+"""
 
-from bottle import * 
-from system_stats import *
 import logging
 import json
 from datetime import datetime
+from bottle import hook, request, response, route, run, HTTPResponse
+from system_stats import get_cpu_usage, get_memory_usage, get_disk_usage
+from system_stats import get_network_usage, get_all_stats
 
 timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
 logging.basicConfig(
     filename=f'restapi_{timestamp}.log',
-    level=logging.INFO,        
+    level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
-from bottle import HTTPResponse
-
 @hook('before_request')
 def validate_api_key():
-    api_key = request.get_header('x-api-key')
-    logging.info(f'api key is {api_key}')
+    """
+    Validates the API key provided in the request header.
     
+    Raises:
+        HTTPResponse: If the API key is missing or invalid, returns a 401 status
+                      with an appropriate error message in JSON format.
+    """
+    api_key = request.get_header('x-api-key')
     if not api_key:
         logging.warning("No API key provided")
         response_data = {'status': 'error', 'message': 'Unauthorized: Missing API key'}
-        raise HTTPResponse(status=401, body=json.dumps(response_data), content_type='application/json')
-    
+        raise HTTPResponse(
+            status=401, body=json.dumps(response_data), content_type='application/json')
+
     if api_key != "my-secret-key":
-        logging.warning(f"Invalid API key: {api_key}")
+        logging.warning("Invalid API key: %s", api_key)
         response_data = {'status': 'error', 'message': 'Unauthorized: Invalid API key'}
-        raise HTTPResponse(status=401, body=json.dumps(response_data), content_type='application/json')
-    
+        raise HTTPResponse(
+            status=401, body=json.dumps(response_data), content_type='application/json')
 
 @route('/system-stats')
 def system_stats():
+    """
+    Fetches and returns system statistics based on query parameters.
+
+    Query Parameters:
+        include_cpu: If present, includes CPU usage in the response.
+        include_memory: If present, includes memory usage in the response.
+        include_disk: If present, includes disk usage in the response.
+        include_network: If present, includes network stats in the response.
+
+    Returns:
+        str: JSON-formatted string containing the requested statistics
+             or an error message in case of failure.
+    """
     response.content_type = 'application/json'
     valid_params = {'include_cpu', 'include_memory', 'include_disk', 'include_network'}
     query_params = set(request.query.keys())
-    logging.info(f"valid params {query_params}")
 
     # Check for invalid parameters
     if not query_params.issubset(valid_params) and query_params:
@@ -75,20 +94,22 @@ def system_stats():
                 stats.append(all_stats)
 
         if stats and any(stat is not None for stat in stats):
-            system_stats = {
+            stats_result = {
                 "stats": stats
             }
             response.status = 200
-            return json.dumps(system_stats, indent=4)
-        else:
-            logging.warning("No stats collected")
-            response.status = 500
-            return json.dumps({'status': 'error', 'message': 'No stats collected, check your parameters'}, indent=4)
+            return json.dumps(stats_result, indent=4)
 
-    except Exception as e:
-        logging.error(f"Error occurred {e}")
+        logging.warning("No stats collected")
+        response.status = 500
+        return json.dumps(
+            {'status': 'error', 'message': 'No stats collected, check your parameters'},
+        indent=4)
+
+    except (ValueError, KeyError, RuntimeError) as e:
+        logging.error("Error occurred: %s", e)
         response.status = 500
         return json.dumps({'status': 'error', 'message': 'Internal error occurred'}, indent=4)
 
-if __name__ == '__main__': 
+if __name__ == '__main__':
     run(host='0.0.0.0', port='9090')

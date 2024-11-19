@@ -2,3 +2,4 @@ bottle
 psutil
 coverage
 webtest
+pylint
