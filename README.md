@@ -1,20 +1,34 @@
-URL: /system-stats
+# Comprehensive System Stats Monitoring via REST API
 
-Method: GET
+A RESTful API to fetch system statistics such as CPU, memory, disk, and network usage.
 
-Query Parameters:
+---
 
-include_cpu (optional): Include CPU usage stats (e.g., include_cpu=true)
-include_memory (optional): Include memory usage stats (e.g., include_memory=true)
-include_disk (optional): Include disk usage stats (e.g., include_disk=true)
-include_network (optional): Include network usage stats (e.g., include_network=true)
+## Endpoint
 
-If no query parameters are provided, the API will return all available system stats. 
+### **URL:** `/system-stats`
+### **Method:** `GET`
 
-Ex: 
+---
+
+## Query Parameters
+
+The following query parameters are optional and can be used to fetch specific system statistics:
+
+- **`include_cpu`**: Include CPU usage stats (e.g., `include_cpu=true`)
+- **`include_memory`**: Include memory usage stats (e.g., `include_memory=true`)
+- **`include_disk`**: Include disk usage stats (e.g., `include_disk=true`)
+- **`include_network`**: Include network usage stats (e.g., `include_network=true`)
+
+**Note:** If no query parameters are provided, the API will return all available system stats.
+
+---
+
+## Example Request
+
+```bash
 curl "http://localhost:9090/system-stats?include_cpu=true&include_memory=true"
 
-output:
 {
     "stats": [
         {
@@ -37,4 +51,4 @@ output:
         }
     ]
 }
-
+```
