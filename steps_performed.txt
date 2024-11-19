@@ -1,0 +1,57 @@
+This program is written for Amazon Linux.
+
+- Public IP was "3.22.248.212".
+- To ssh into compute : ssh -i /pathToPemFile ec2-user@3.22.248.212
+- To copy files from system to compute : scp -r . ec2-user@3.22.248.212:~/rest-api-server
+- To install dependencies : pip install -r requirements.txt
+- Used systemd to run the process as daemon.
+- Added custom TCP port 9090 to security group along with SSH and HTTP in EC2 instance
+
+Steps to run the service as daemon:
+
+- config file added :
+    [Unit]
+    Description=This is a daemon service which has rest api to get the system stats.
+
+    [Service]
+    ExecStart=/usr/bin/python3 /home/ec2-user/rest-api-server/restapi.py
+    Restart=always
+    User=ec2-user
+
+Start as daemon:
+
+sudo systemctl daemon-reload
+sudo systemctl restart restapi.service
+sudo systemctl status restapi.service
+
+logs: 
+[ec2-user@ip-172-31-4-163 ~]$ sudo systemctl status restapi.service
+● restapi.service - This is a daemon service which has rest api to get the system stats.
+     Loaded: loaded (/etc/systemd/system/restapi.service; static)
+     Active: active (running) since Thu 2024-10-10 01:36:05 UTC; 2s ago
+   Main PID: 5652 (python3)
+      Tasks: 1 (limit: 1112)
+     Memory: 13.1M
+        CPU: 107ms
+     CGroup: /system.slice/restapi.service
+
+
+Testing:
+
+Locally:
+    curl -H "x-api-key: my-secret-key" http://localhost:9090/system-stats
+
+Calling api server on ec2 instance:
+    curl -H "x-api-key: my-secret-key" http://3.22.248.212:9090/system-stats    
+
+Challenges faced:
+
+- To add custom TCP in inbound rule of security group of EC2 instance.
+- To dig deep into the linux commands to be used to get system stats
+- To add auth filter. Learnt about @hook(before-request)
+
+
+Main References:
+
+https://www.youtube.com/watch?v=AuZ0SjlWqEg
+https://bottlepy.org/docs/dev/api.html
