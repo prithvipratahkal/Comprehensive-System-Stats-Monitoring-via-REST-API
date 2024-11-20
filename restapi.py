@@ -3,11 +3,10 @@ This program runs on an Amazon Linux image and provides system stats.
 """
 import json
 import logging
-from bottle import *
+from datetime import datetime
+from bottle import hook, request, response, route, run, HTTPResponse, app
 from system_stats import get_memory_usage, get_cpu_usage, get_all_stats
 from system_stats import get_network_usage, get_disk_usage
-
-from datetime import datetime
 
 timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
@@ -16,9 +15,6 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
-
-from bottle import HTTPResponse
-
 
 @hook('before_request')
 def validate_api_key():
@@ -103,12 +99,11 @@ def system_stats():
             }
             response.status = 200
             return json.dumps(system_stats, indent=4)
-        else:
-            logging.warning("No stats collected")
-            response.status = 500
-            return json.dumps(
-                {'status': 'error', 'message': 'No stats collected, check your parameters'},
-                indent=4)
+        logging.warning("No stats collected")
+        response.status = 500
+        return json.dumps(
+            {'status': 'error', 'message': 'No stats collected, check your parameters'},
+            indent=4)
 
     except Exception as e:
         logging.error("Error occurred %s",e)
