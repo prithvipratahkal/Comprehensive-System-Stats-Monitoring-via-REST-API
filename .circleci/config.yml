@@ -1,0 +1,29 @@
+version: 2.1
+
+jobs:
+  build:
+    docker:
+      - image: python:3.9
+    steps:
+      - checkout
+
+      - run:
+          name: Install dependencies
+          command: |
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt
+
+      - run:
+          name: Run Tests and Coverage
+          command: |
+            coverage run -m unittest discover
+            coverage report
+
+      - run:
+          name: Static Analysis
+          command: pylint --fail-under=9.5 restapi.py system_stats.py
+
+      - store_test_results:
+          path: test-results
+      - store_artifacts:
+          path: coverage
