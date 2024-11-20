@@ -34,10 +34,10 @@ jobs:
       - run:
           name: Build Docker Image
           command: |
-            docker build -t $DOCKERHUB_USERNAME/restapi:latest .
+            docker build -t $DOCKERHUB_USERNAME/cs-218-cloud-technologies-hw2:latest .
 
       - run:
           name: Push Docker Image to DockerHub
           command: |
             echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-            docker push $DOCKERHUB_USERNAME/restapi:latest
+            docker push $DOCKERHUB_USERNAME/cs-218-cloud-technologies-hw2:latest
